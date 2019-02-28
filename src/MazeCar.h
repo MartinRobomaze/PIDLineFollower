@@ -4,8 +4,3 @@
 #include <util/delay.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-int arrLen(int *arr) {
-  int size = *(&arr + 1) - arr;
-  return size;
-}

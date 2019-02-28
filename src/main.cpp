@@ -6,7 +6,7 @@
 
 #define CAL_NUM_READ 4096
 
-int motorPins[4] = {3, 5, 6, 9};
+int motorsPins[4] = {3, 5, 6, 9};
 int lightSensorsPins[8] = {A0, A1, A2, A3, A4, A5, A6, A7};
 
 int Kp = 1;
@@ -18,13 +18,16 @@ int maxSensorValue = 0;
 
 int baseSpeed = 150;
 
-
-
 void calibrate(int *minValue, int *maxValue);
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB);
+void readLightSensors(int *sensorsValueArr);
+int getError(int *sensorsReadValue);
 
 void setup() {
   Serial.begin(9600);
+
+  setupMotors(motorPins);
+  setupSensors(lightSensorsPins);
 
   calibrate(&minSensorValue, &maxSensorValue);
 }
@@ -38,7 +41,7 @@ void calibrate(int *minValue, int *maxValue) {
   int sensorMaxValue = 0;
 
   for (int i = 0; i < CAL_NUM_READ; i++) {
-    for (int j = 0; j < arrLen(lightSensorsPins); j++) {
+    for (int j = 0; j < 8; j++) {
       int sensorValue = readLightSensor(j);
 
       if (sensorValue < sensorMinValue) {
@@ -59,6 +62,12 @@ void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB) {
   int D = error - lastError;
   int PID = P * Kp + D * Kd;
 
-  speedA = baseSpeed - PID;
-  speedB = baseSpeed + PID;
+  *speedA = baseSpeed - PID;
+  *speedB = baseSpeed + PID;
+}
+
+void readLightSensors(int *sensorsValueArr) {
+  for (int i = 0; i < 8; i++) {
+
+  }
 }
