@@ -1,8 +1,0 @@
-{
-  "execPath": "/Users/matko/.platformio/packages/toolchain-atmelavr/bin/avr-g++",
-  "gccDefaultCFlags": "-fsyntax-only -std=gnu11 -fno-fat-lto-objects -Os -Wall -ffunction-sections -fdata-sections -flto -mmcu=atmega328p -DPLATFORMIO=30604 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10805 -D__AVR_ATmega328P__",
-  "gccDefaultCppFlags": "-fsyntax-only -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -Os -Wall -ffunction-sections -fdata-sections -flto -mmcu=atmega328p -DPLATFORMIO=30604 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10805 -D__AVR_ATmega328P__",
-  "gccErrorLimit": 15,
-  "gccIncludePaths": "/Users/matko/.platformio/packages/framework-arduinoavr/cores/arduino,/Users/matko/.platformio/packages/framework-arduinoavr/variants/standard,/Users/matko/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/EEPROM/src,/Users/matko/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/HID/src,/Users/matko/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src,/Users/matko/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SoftwareSerial/src,/Users/matko/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/Wire/src,/Users/matko/.platformio/packages/toolchain-atmelavr/avr/include,/Users/matko/.platformio/packages/toolchain-atmelavr/lib/gcc/avr/5.4.0/include,/Users/matko/.platformio/packages/toolchain-atmelavr/lib/gcc/avr/5.4.0/include-fixed,/Users/matko/.platformio/packages/tool-unity,/Users/matko/Documents/PlatformIO/Projects/MazeCarLib/include,/Users/matko/Documents/PlatformIO/Projects/MazeCarLib/src",
-  "gccSuppressWarnings": false
-}
