@@ -6,7 +6,7 @@ int *motorPins;
 void setupMotors(int pins[4]) {
   motorPins = pins;
   for (int i = 0; i < 4; i++) {
-    PinMode(pins[i], OUTPUT);
+    pinMode(pins[i], OUTPUT);
   }
 }
 
