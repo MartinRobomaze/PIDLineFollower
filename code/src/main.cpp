@@ -4,42 +4,51 @@
   Creators: Martinlinux1, Kiriwer
   Version: 0.1a
 */
-
+#include "Arduino.h"
+#include "SoftwareSerial.h"
 #include "MazeCar.h"
-#include "IOHandle.h"
 #include "Motors.h"
 #include "LightSensors.h"
 
 // Motor and light sensor pins.
-int motorsPins[4] = {5, 6, 9, 10};
+int motorsPins[4] = {5, 10, 9, 6};
 int lightSensorsPins[8] = {A0, A1, A2, A3, A4, A5, A6, A7};
 
 int numberLightSensors = 8;
 
-// Kp, Kd constants - you hzve to experiment with them to have good results.
-int Kp = 1;
-int Kd = 1;
+int BTRx = 12;
+int BTTx = 11;
+
+SoftwareSerial BT(BTRx, BTTx);
+
+// Kp, Kd constants - you have to experiment with them to have good results.
+float Kp = 1;
+float Kd = 1;
 // Last error.
 int lastError = 0;
 
 // Calibration values for light sensors - zou have to set them depending on the light conditions
-int blackSensorValue = 0;
-int whiteSensorValue = 0;
+int blackSensorValue = 500;
+int whiteSensorValue = 100;
 
 // Base speed for motors.
 int baseSpeed = 150;
 
 // Function declaration.
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB);
-void readLightSensors(int *sensorsValueArr);
+int readLightSensorDigital(int sensor);
 int getError(int *sensorsReadValue);
+void getBluetoothData(float *Kp, float *Kd);
+
 
 void setup() {
   // Start serial communication.
   Serial.begin(9600);
 
+  BT.begin(9600);
+
   // Setup motors.
-  setupMotors(motorPins);
+  setupMotors(motorsPins);
   // Setup light sensors.
   setupSensors(lightSensorsPins);
 }
@@ -49,19 +58,31 @@ void loop() {
   int lightSensorsReading[numberLightSensors];
 
   // Read light sensors.
-  readLightSensors(lightSensorsReading);
+  for (int i = 0; i < numberLightSensors; i++) {
+    lightSensorsReading[i] = readLightSensorDigital(i);
+  }
 
   // Get error based on the light sensors reading.
   int error = getError(lightSensorsReading);
+  // Serial.println(error);
 
   int speedA = 0;
   int speedB = 0;
 
   // Calculate PID value based on error and Kp and Kd constants.
   calculatePID(error, Kp, Kd, &speedA, &speedB);
-
-  // Movve motors with speeds returned by PID algorhitm.
+  // Serial.println(speedA);
+  // Serial.println(speedB);
+  // Move motors with speeds returned by PID algorhitm.
   moveTank(speedA, speedB);
+
+  if (BT.available()) {
+    getBluetoothData(&Kp, &Kd);
+    Serial.print(Kp);
+    Serial.print("\t");
+    Serial.print(Kd);
+    Serial.print("\n");
+  }
 }
 
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB) {
@@ -77,23 +98,20 @@ void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB) {
   *speedB = baseSpeed + PID;
 }
 
-void readLightSensors(int *sensorsValueArr) {
+int readLightSensorDigital(int sensor) {
   // Sensor readings array.
-  int sensorValues[numberLightSensors];
+  int sensorValue;
 
-  for (int i = 0; i < numberLightSensors; i++) {
     // If light sensor is on black, write 1.
-    if (readLightSensor(i) >= blackSensorValue) {
-      sensorValues[i] = 1;
-    }
-
-    // If light sensor is whitw, write 0.
-    else if (readLightSensor(i) <= whiteSensorValue) {
-      sensorValues[i] = 0;
-    }
+  if (readLightSensor(sensor) >= blackSensorValue) {
+    sensorValue = 1;
   }
 
-  sensorsValueArr = sensorValues;
+  // If light sensor is whitw, write 0.
+  else if (readLightSensor(sensor) <= whiteSensorValue) {
+    sensorValue = 0;
+  }
+  return sensorValue;
 }
 
 int getError(int *sensorsReadValue) {
@@ -109,4 +127,25 @@ int getError(int *sensorsReadValue) {
 
   // Return error.
   return error;
+}
+
+void getBluetoothData(float *Kp, float *Kd) {
+  String data = "";
+  while (BT.available()) {
+    char ReadChar = (char)BT.read();
+
+    if (ReadChar == ')') {
+      break;
+    } else {
+      data += ReadChar;
+    }
+  }
+  int index0 = data.indexOf(':');
+  int index1 = data.indexOf(':', index0 + 1);
+  int index2 = data.indexOf(':', index1 + 1);
+  int kp = data.substring(0, index0).toInt();
+  int ki = data.substring(index0 + 1, index1).toInt();
+  int kd = data.substring(index1 + 1, index2).toInt();
+  *Kp = kp;
+  *Kd = kd;
 }
