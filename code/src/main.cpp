@@ -163,23 +163,24 @@ int getError(int *sensorsReadValue) {
 }
 
 void getBluetoothData(float *Kp, float *Kd) {
-  int data[3];
-
-  int i = 0;
+  String data = "";
   while (BT.available()) {
-    data[i] = BT.read();
-    i++;
+    char ReadChar = (char)BT.read();
+
+    if (ReadChar == ')') {
+      break;
+    } else {
+      data += ReadChar;
+    }
   }
-
-  Serial.print(data[0]);
-  Serial.print("\t");
-  Serial.print(data[1]);
-  Serial.print("\t");
-  Serial.print(data[2]);
-  Serial.println("\t");
-
-  *Kp = data[0];
-  *Kd = data[2];
+  int index0 = data.indexOf(':');
+  int index1 = data.indexOf(':', index0 + 1);
+  int index2 = data.indexOf(':', index1 + 1);
+  int kp = data.substring(0, index0).toInt();
+  int ki = data.substring(index0 + 1, index1).toInt();
+  int kd = data.substring(index1 + 1, index2).toInt();
+  *Kp = kp;
+  *Kd = kd;
 }
 
 void save() {
