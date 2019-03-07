@@ -43,13 +43,11 @@ int debounce = 200;
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB);
 int readLightSensorDigital(int sensor);
 int getError(int *sensorsReadValue);
-void getBluetoothData(float *Kp, float *Kd);
+void getBluetoothData(float *kp, float *kd);
 void interrupt();
 void save();
 
 void setup() {
-  Kp = EEPROM.read(0);
-  Kd = EEPROM.read(1);
   // Set interrupt button pin as INPUT_PULLUP.
   pinMode(buttonPin, INPUT_PULLUP);
 
@@ -63,6 +61,11 @@ void setup() {
   setupMotors(motorsPins);
   // Setup light sensors.
   setupSensors(lightSensorsPins);
+
+  Kp = EEPROM.read(0);
+  Kd = EEPROM.read(1);
+  Serial.println(Kp);
+  Serial.println(Kd);
 }
 
 void loop() {
@@ -162,7 +165,7 @@ int getError(int *sensorsReadValue) {
   return error;
 }
 
-void getBluetoothData(float *Kp, float *Kd) {
+void getBluetoothData(float *kp, float *kd) {
   String data = "";
   while (BT.available()) {
     char ReadChar = (char)BT.read();
@@ -173,17 +176,28 @@ void getBluetoothData(float *Kp, float *Kd) {
       data += ReadChar;
     }
   }
-  int index0 = data.indexOf(':');
-  int index1 = data.indexOf(':', index0 + 1);
-  int index2 = data.indexOf(':', index1 + 1);
-  int kp = data.substring(0, index0).toInt();
-  int ki = data.substring(index0 + 1, index1).toInt();
-  int kd = data.substring(index1 + 1, index2).toInt();
-  *Kp = kp;
-  *Kd = kd;
+
+  if (data == "s") {
+    save();
+    *kp = Kp;
+    *kd = Kd;
+  }
+  else {
+    int index0 = data.indexOf(':');
+    int index1 = data.indexOf(':', index0 + 1);
+    int index2 = data.indexOf(':', index1 + 1);
+    int kP = data.substring(0, index0).toInt();
+    int kI = data.substring(index0 + 1, index1).toInt();
+    int kD = data.substring(index1 + 1, index2).toInt();
+    *kp = kP;
+    *kd = kD;
+  }
 }
 
 void save() {
   EEPROM.write(0, Kp);
   EEPROM.write(1, Kd);
+  Serial.println("data saved");
+  Serial.println(EEPROM.read(0));
+  Serial.println(EEPROM.read(1));
 }
