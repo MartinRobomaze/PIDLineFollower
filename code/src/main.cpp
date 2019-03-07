@@ -171,6 +171,13 @@ void getBluetoothData(float *Kp, float *Kd) {
     i++;
   }
 
+  Serial.print(data[0]);
+  Serial.print("\t");
+  Serial.print(data[1]);
+  Serial.print("\t");
+  Serial.print(data[2]);
+  Serial.println("\t");
+
   *Kp = data[0];
   *Kd = data[2];
 }
