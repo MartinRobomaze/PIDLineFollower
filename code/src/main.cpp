@@ -14,6 +14,8 @@
 int motorsPins[4] = {5, 10, 9, 6};
 int lightSensorsPins[8] = {A0, A1, A2, A3, A4, A5, A6, A7};
 
+int buttonPin = 2;
+
 int numberLightSensors = 8;
 
 int BTRx = 12;
@@ -34,6 +36,11 @@ int whiteSensorValue = 100;
 // Base speed for motors.
 int baseSpeed = 150;
 
+long time = 0;
+int debounce = 200;
+bool previous = false;
+bool state = false;
+
 // Function declaration.
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB);
 int readLightSensorDigital(int sensor);
@@ -51,38 +58,53 @@ void setup() {
   setupMotors(motorsPins);
   // Setup light sensors.
   setupSensors(lightSensorsPins);
+
+  pinMode(buttonPin, INPUT_PULLUP);
 }
 
 void loop() {
-  // Light sensors readings array.
-  int lightSensorsReading[numberLightSensors];
+  if (state) {
+    // Light sensors readings array.
+    int lightSensorsReading[numberLightSensors];
 
-  // Read light sensors.
-  for (int i = 0; i < numberLightSensors; i++) {
-    lightSensorsReading[i] = readLightSensorDigital(i);
+    // Read light sensors.
+    for (int i = 0; i < numberLightSensors; i++) {
+      lightSensorsReading[i] = readLightSensorDigital(i);
+    }
+
+    // Get error based on the light sensors reading.
+    int error = getError(lightSensorsReading);
+    // Serial.println(error);
+
+    int speedA = 0;
+    int speedB = 0;
+
+    // Calculate PID value based on error and Kp and Kd constants.
+    calculatePID(error, Kp, Kd, &speedA, &speedB);
+    // Serial.println(speedA);
+    // Serial.println(speedB);
+    // Move motors with speeds returned by PID algorhitm.
+    moveTank(speedA, speedB);
+
+    if (BT.available()) {
+      getBluetoothData(&Kp, &Kd);
+      Serial.print(Kp);
+      Serial.print("\t");
+      Serial.print(Kd);
+      Serial.print("\n");
+    }
   }
 
-  // Get error based on the light sensors reading.
-  int error = getError(lightSensorsReading);
-  // Serial.println(error);
+  if (digitalRead(buttonPin) == LOW && previous == HIGH && millis() - time > debounce) {
+    if (state)
+      state = false;
+    else
+      state = true;
 
-  int speedA = 0;
-  int speedB = 0;
-
-  // Calculate PID value based on error and Kp and Kd constants.
-  calculatePID(error, Kp, Kd, &speedA, &speedB);
-  // Serial.println(speedA);
-  // Serial.println(speedB);
-  // Move motors with speeds returned by PID algorhitm.
-  moveTank(speedA, speedB);
-
-  if (BT.available()) {
-    getBluetoothData(&Kp, &Kd);
-    Serial.print(Kp);
-    Serial.print("\t");
-    Serial.print(Kd);
-    Serial.print("\n");
+    time = millis();
   }
+
+  previous = digitalRead(buttonPin);
 }
 
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB) {
