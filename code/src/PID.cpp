@@ -4,6 +4,7 @@
   Creators: Martinlinux1, Kiriwer
   Version: 0.1a
 */
+
 #include "MazeCar.h"
 #include "Motors.h"
 #include "LightSensors.h"
@@ -23,18 +24,19 @@ SoftwareSerial BT(BTRx, BTTx);
 
 // Kp, Kd constants - you have to experiment with them to have good results.
 float Kp = 1;
+float Ki = 1;
 float Kd = 1;
 // Last error.
 int lastError = 0;
 
-// Calibration values for light sensors - zou have to set them depending on the light conditions
+// Calibration values for light sensors - you have to set them depending on the light conditions
 int blackSensorValue = 500;
 int whiteSensorValue = 100;
 
 // Base speed for motors.
-int baseSpeed = 150;
-bool running = false;
+int baseSpeed = 220;
 
+bool running = false;
 int previous = 1;
 long time = 0;
 int debounce = 200;
@@ -43,7 +45,7 @@ int debounce = 200;
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB);
 int readLightSensorDigital(int sensor);
 int getError(int *sensorsReadValue);
-void getBluetoothData(float *kp, float *kd);
+void getBluetoothData(float *kp, float *ki, float *kd);
 void interrupt();
 void save();
 
@@ -63,8 +65,10 @@ void setup() {
   setupSensors(lightSensorsPins);
 
   Kp = EEPROM.read(0);
-  Kd = EEPROM.read(1);
+  Ki = EEPROM.read(1);
+  Kd = EEPROM.read(2);
   Serial.println(Kp);
+  Serial.println(Ki);
   Serial.println(Kd);
 }
 
@@ -95,10 +99,12 @@ void loop() {
     // If data from bluetooth are available.
     if (BT.available()) {
       // Get Kp and Kd from the app.
-      getBluetoothData(&Kp, &Kd);
+      getBluetoothData(&Kp, &Ki, &Kd);
 
       // Debug messages.
       Serial.print(Kp);
+      Serial.print("\t");
+      Serial.print(Ki);
       Serial.print("\t");
       Serial.print(Kd);
       Serial.print("\n");
@@ -124,14 +130,15 @@ void loop() {
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB) {
   // Proportional.
   int P = error;
+  int I = I + error;
   // Derivative.
   int D = error - lastError;
   // PD value.
-  int PID = P * Kp + D * Kd;
+  int PID = P * Kp + I * Ki + D * Kd;
 
   // Calculate speedA and speedB values based on PD value.
-  *speedA = baseSpeed - PID;
-  *speedB = baseSpeed + PID;
+  *speedA = baseSpeed - PID > 255 ? 255 : baseSpeed - PID;
+  *speedB = baseSpeed + PID > 255 ? 255 : baseSpeed + PID;
 }
 
 int readLightSensorDigital(int sensor) {
@@ -165,7 +172,7 @@ int getError(int *sensorsReadValue) {
   return error;
 }
 
-void getBluetoothData(float *kp, float *kd) {
+void getBluetoothData(float *kp, float *ki, float *kd) {
   String data = "";
   while (BT.available()) {
     char ReadChar = (char)BT.read();
@@ -182,6 +189,7 @@ void getBluetoothData(float *kp, float *kd) {
     *kp = Kp;
     *kd = Kd;
   }
+
   else {
     int index0 = data.indexOf(':');
     int index1 = data.indexOf(':', index0 + 1);
@@ -190,14 +198,17 @@ void getBluetoothData(float *kp, float *kd) {
     int kI = data.substring(index0 + 1, index1).toInt();
     int kD = data.substring(index1 + 1, index2).toInt();
     *kp = kP;
+    *ki = kI;
     *kd = kD;
   }
 }
 
 void save() {
   EEPROM.write(0, Kp);
-  EEPROM.write(1, Kd);
+  EEPROM.write(1, Ki);
+  EEPROM.write(2, Kd);
   Serial.println("data saved");
   Serial.println(EEPROM.read(0));
   Serial.println(EEPROM.read(1));
+  Serial.println(EEPROM.read(2));
 }
