@@ -173,33 +173,28 @@ int getError(int *sensorsReadValue) {
 }
 
 void getBluetoothData(float *kp, float *ki, float *kd) {
-  String data = "";
+  int  data[10];
+  int i = 0;
   while (BT.available()) {
-    char ReadChar = (char)BT.read();
-
-    if (ReadChar == ')') {
-      break;
-    } else {
-      data += ReadChar;
+      if (BT.read() == 41) {
+        break;
+      }
+      data[i] = BT.read();
+      delay(1);
+      i++;
     }
-  }
 
-  if (data == "s") {
+  if (data[0] == 's') {
     save();
     *kp = Kp;
+    *ki = Ki;
     *kd = Kd;
   }
 
   else {
-    int index0 = data.indexOf(':');
-    int index1 = data.indexOf(':', index0 + 1);
-    int index2 = data.indexOf(':', index1 + 1);
-    int kP = data.substring(0, index0).toInt();
-    int kI = data.substring(index0 + 1, index1).toInt();
-    int kD = data.substring(index1 + 1, index2).toInt();
-    *kp = kP;
-    *ki = kI;
-    *kd = kD;
+    *kp = data[0];
+    *ki = data[1];
+    *kd = data[2];
   }
 }
 
