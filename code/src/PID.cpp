@@ -45,7 +45,7 @@ int debounce = 200;
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB);
 int readLightSensorDigital(int sensor);
 int getError(int *sensorsReadValue);
-void getBluetoothData(float *kp, float *ki, float *kd);
+void getBluetoothData(float *kp, float *ki, float *kd, int *motorSpeed);
 void interrupt();
 void save();
 
@@ -67,9 +67,11 @@ void setup() {
   Kp = EEPROM.read(0);
   Ki = EEPROM.read(1);
   Kd = EEPROM.read(2);
+  baseSpeed = EEPROM.read(3);
   Serial.println(Kp);
   Serial.println(Ki);
   Serial.println(Kd);
+  Serial.println(baseSpeed);
 }
 
 void loop() {
@@ -99,7 +101,7 @@ void loop() {
     // If data from bluetooth are available.
     if (BT.available()) {
       // Get Kp and Kd from the app.
-      getBluetoothData(&Kp, &Ki, &Kd);
+      getBluetoothData(&Kp, &Ki, &Kd, &baseSpeed);
 
       // Debug messages.
       Serial.print(Kp);
@@ -107,6 +109,8 @@ void loop() {
       Serial.print(Ki);
       Serial.print("\t");
       Serial.print(Kd);
+      Serial.print("\t");
+      Serial.print(baseSpeed);
       Serial.print("\n");
     }
   }
@@ -172,38 +176,75 @@ int getError(int *sensorsReadValue) {
   return error;
 }
 
-void getBluetoothData(float *kp, float *ki, float *kd) {
-  int  data[10];
-  int i = 0;
+void getBluetoothData(float *kp, float *ki, float *kd, int *motorSpeed) {
+  String dataRaw = "";
   while (BT.available()) {
-      if (BT.read() == 41) {
-        break;
-      }
-      data[i] = BT.read();
-      delay(1);
-      i++;
+    dataRaw += BT.readString();
+    delay(2);
+  }
+
+  String data = dataRaw.substring(dataRaw.lastIndexOf('*'));
+
+  Serial.println(data);
+  String response = "*";
+
+  if (data.indexOf('*') == 0) {
+    response += 'Z';
+    if (data.indexOf('P') == 1) {
+      String value = data.substring(2, data.indexOf('~'));
+      Serial.println(value);
+      *kp = value.toInt();
+
+      response += '0';
     }
 
-  if (data[0] == 's') {
-    save();
-    *kp = Kp;
-    *ki = Ki;
-    *kd = Kd;
-  }
+    else if (data.indexOf('I') == 1) {
+      String value = data.substring(2, data.indexOf('~'));
 
-  else {
-    *kp = data[0];
-    *ki = data[1];
-    *kd = data[2];
+      *ki = value.toInt();
+
+      response += '0';
+    }
+
+    else if (data.indexOf('D') == 1) {
+      String value = data.substring(2, data.indexOf('~'));
+
+      *kd = value.toInt();
+
+      response += '0';
+    }
+
+    else if (data.indexOf('S') == 1) {
+      String value = data.substring(2, data.indexOf('~'));
+
+      *motorSpeed = value.toInt();
+
+      response += '0';
+    }
+
+    else if (data.indexOf('V') == 1) {
+      save();
+
+      response += '0';
+    }
+
+    else {
+      response += '2';
+    }
   }
+  response += '~';
+  Serial.println(response);
+  BT.print(response);
 }
 
 void save() {
   EEPROM.write(0, Kp);
   EEPROM.write(1, Ki);
   EEPROM.write(2, Kd);
+  EEPROM.write(3, baseSpeed);
   Serial.println("data saved");
   Serial.println(EEPROM.read(0));
   Serial.println(EEPROM.read(1));
   Serial.println(EEPROM.read(2));
+  Serial.println(EEPROM.read(3));
 }
