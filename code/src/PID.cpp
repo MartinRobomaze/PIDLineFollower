@@ -46,7 +46,6 @@ void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB);
 int readLightSensorDigital(int sensor);
 int getError(int *sensorsReadValue);
 void getBluetoothData(float *kp, float *ki, float *kd, int *motorSpeed);
-void interrupt();
 void save();
 
 void setup() {
@@ -139,10 +138,10 @@ void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB) {
   int D = error - lastError;
   // PD value.
   int PID = P * Kp + I * Ki + D * Kd;
-
+  Serial.println(PID);
   // Calculate speedA and speedB values based on PD value.
-  *speedA = baseSpeed - PID > 255 ? 255 : baseSpeed - PID;
-  *speedB = baseSpeed + PID > 255 ? 255 : baseSpeed + PID;
+  *speedA = baseSpeed + PID > 255 ? 255 : baseSpeed + PID < 0 ? 0 : baseSpeed + PID;
+  *speedB = baseSpeed - PID > 255 ? 255 : baseSpeed - PID < 0 ? 0 : baseSpeed - PID;
 }
 
 int readLightSensorDigital(int sensor) {
@@ -178,10 +177,8 @@ int getError(int *sensorsReadValue) {
 
 void getBluetoothData(float *kp, float *ki, float *kd, int *motorSpeed) {
   String dataRaw = "";
-  while (BT.available()) {
-    dataRaw += BT.readString();
-    delay(2);
-  }
+
+  dataRaw += BT.readString();
 
   String data = dataRaw.substring(dataRaw.lastIndexOf('*'));
 
