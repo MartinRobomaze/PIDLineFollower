@@ -1,3 +1,3 @@
 #include "Arduino.h"
-#include <stdlib.h>
-#include <stdio.h>
+#include "SoftwareSerial.h"
+#include "EEPROM.h"
