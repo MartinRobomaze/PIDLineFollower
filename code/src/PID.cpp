@@ -16,7 +16,7 @@ int motorsPins[4] = {5, 10, 9, 6};
 int lightSensorsPins[8] = {A0, A1, A2, A3, A4, A5, A6, A7};
 
 int numberLightSensors = 8;
-int BTRx = 10;
+int BTRx = 12;
 int BTTx = 11;
 
 int buttonPin = 2;
@@ -24,7 +24,6 @@ int buttonPin = 2;
 SoftwareSerial BT(BTRx, BTTx);
 
 // Kp, Kd constants - you have to experiment with them to have good results.
-int I = 0;
 float Kp = 1;
 float Ki = 1;
 float Kd = 1;
@@ -84,7 +83,11 @@ void loop() {
     // Read light sensors.
     for (int i = 0; i < numberLightSensors; i++) {
       lightSensorsReading[i] = readLightSensorDigital(i);
+      // Serial.print(lightSensorsReading[i]);
+      // Serial.print("\t");
     }
+
+    //   Serial.print("\n");
 
     // Get error based on the light sensors reading.
     int error = getError(lightSensorsReading);
@@ -136,7 +139,7 @@ void loop() {
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB) {
   // Proportional.
   int P = error;
-  I = I + error;
+  int I = I + error;
   // Derivative.
   int D = error - lastError;
   // PD value.
@@ -145,6 +148,7 @@ void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB) {
   // Calculate speedA and speedB values based on PD value.
   *speedA = baseSpeed + PID > 255 ? 255 : baseSpeed + PID;
   *speedB = baseSpeed - PID > 255 ? 255 : baseSpeed - PID;
+  // Serial.println(PID);
 }
 
 int readLightSensorDigital(int sensor) {
@@ -168,11 +172,16 @@ int getError(int *sensorsReadValue) {
   int error = -4;
 
   for (int i = 0; i < numberLightSensors; i++) {
+
+    Serial.print(sensorsReadValue[i]);
+    Serial.print("\t");
     // If sensor is black, increment error.
     if (sensorsReadValue[i] == 1) {
       error++;
     }
   }
+
+  Serial.print("\n");
 
   // Return error.
   return error;
@@ -188,6 +197,8 @@ void getBluetoothData(float *kp, float *ki, float *kd, int *speed) {
     } else {
       data += ReadChar;
     }
+
+    delay(10);
   }
 
   if (data == "s") {
