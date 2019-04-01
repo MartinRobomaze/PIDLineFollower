@@ -101,7 +101,6 @@ void loop() {
 
     // If data from bluetooth are available.
     if (BT.available()) {
-      Serial.println("Change");
       // Get Kp and Kd from the app.
       getBluetoothData(&Kp, &Ki, &Kd, &baseSpeed);
 
@@ -122,6 +121,7 @@ void loop() {
   }
 
   if (digitalRead(buttonPin) == LOW && previous == HIGH && millis() - time > debounce) {
+    Serial.println("Change");
     if (running == HIGH)
       running = LOW;
     else
