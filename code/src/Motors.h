@@ -32,12 +32,41 @@ void moveTank(int speedA, int speedB) {
     analogWrite(motorPins[3], 0);
   }
 
-  if (speedB > 255) {
+  else if (speedB > 255) {
     analogWrite(motorPins[0], speedA);
     analogWrite(motorPins[1], 0);
     analogWrite(motorPins[2], 255);
     analogWrite(motorPins[3], 0);
   }
+
+  if (speedA < 0) {
+    analogWrite(motorPins[0], 0);
+    analogWrite(motorPins[1], -speedA);
+    analogWrite(motorPins[2], speedB);
+    analogWrite(motorPins[3], 0);
+  }
+
+  else if (speedB < 0) {
+    analogWrite(motorPins[0], speedA);
+    analogWrite(motorPins[1], 0);
+    analogWrite(motorPins[2], 0);
+    analogWrite(motorPins[3], -speedB);
+  }
+
+  if (speedA < -255) {
+    analogWrite(motorPins[0], 0);
+    analogWrite(motorPins[1], 255);
+    analogWrite(motorPins[2], speedB);
+    analogWrite(motorPins[3], 0);
+  }
+
+  else if (speedB < -255) {
+    analogWrite(motorPins[0], 0);
+    analogWrite(motorPins[1], speedA);
+    analogWrite(motorPins[2], 255);
+    analogWrite(motorPins[3], 0);
+  }
+
   else {
     analogWrite(motorPins[0], speedA);
     analogWrite(motorPins[1], 0);

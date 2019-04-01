@@ -24,9 +24,10 @@ int buttonPin = 2;
 SoftwareSerial BT(BTRx, BTTx);
 
 // Kp, Kd constants - you have to experiment with them to have good results.
-float Kp = 1;
-float Ki = 1;
-float Kd = 1;
+float P, I, D;
+float Kp = 30;
+float Ki = 240;
+float Kd = 0.9375;
 // Last error.
 int lastError = 0;
 
@@ -64,9 +65,9 @@ void setup() {
   // Setup light sensors.
   setupSensors(lightSensorsPins);
 
-  Kp = EEPROM.read(0);
-  Ki = EEPROM.read(1);
-  Kd = EEPROM.read(2);
+  // Kp = EEPROM.read(0);
+  // Ki = EEPROM.read(1);
+  // Kd = EEPROM.read(2);
   baseSpeed = EEPROM.read(3);
   Serial.println(Kp);
   Serial.println(Ki);
@@ -91,7 +92,7 @@ void loop() {
 
     // Get error based on the light sensors reading.
     int error = getError(lightSensorsReading);
-    // Serial.println(error);
+    Serial.println(error);
 
     int speedA = 0;
     int speedB = 0;
@@ -138,16 +139,16 @@ void loop() {
 
 void calculatePID(int error, int Kp, int Kd, int *speedA, int *speedB) {
   // Proportional.
-  int P = error;
-  int I = I + error;
+  P = error;
+  I = I + error;
   // Derivative.
-  int D = error - lastError;
+  D = error - lastError;
   // PD value.
   int PID = P * Kp + I * Ki + D * Kd;
-
+  Serial.println(PID);
   // Calculate speedA and speedB values based on PD value.
-  *speedA = baseSpeed + PID > 255 ? 255 : baseSpeed + PID;
-  *speedB = baseSpeed - PID > 255 ? 255 : baseSpeed - PID;
+  *speedA = baseSpeed + PID > 255 ? 255 : baseSpeed + PID < -255 ? -255 : baseSpeed + PID;
+  *speedB = baseSpeed - PID > 255 ? 255 : baseSpeed - PID < -255 ? -255 : baseSpeed - PID;
   // Serial.println(PID);
 }
 
@@ -173,8 +174,8 @@ int getError(int *sensorsReadValue) {
 
   for (int i = 0; i < numberLightSensors; i++) {
 
-    Serial.print(sensorsReadValue[i]);
-    Serial.print("\t");
+    // Serial.print(sensorsReadValue[i]);
+    // Serial.print("\t");
     // If sensor is black, increment error.
     if (sensorsReadValue[i] == 1) {
       error++;
